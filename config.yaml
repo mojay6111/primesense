@@ -1,0 +1,66 @@
+# ============================================================
+# primesense — Central Project Configuration
+# ============================================================
+
+project:
+  name: "primesense"
+  description: "NLP Sentiment Analysis on Amazon Prime Video Reviews"
+  version: "1.0.0"
+  authors:
+    - "Edwin George"
+    - "Moses Musyoki"
+    - "Nelima Wanyama"
+    - "Spencer Lugalia"
+    - "Wambui Munene"
+
+paths:
+  data_raw: "data/raw/"
+  data_processed: "data/processed/"
+  models: "models/"
+  notebooks: "notebooks/"
+  figures: "reports/figures/"
+
+data:
+  raw_reviews: "data/raw/prime_videos.csv"
+  raw_reviews_alt: "data/raw/reviews.csv"
+  processed: "data/processed/cleaned_p_movies.csv"
+  test_size: 0.2
+  random_state: 42
+
+sentiment:
+  positive_ratings: [4, 5]
+  neutral_ratings: [3]
+  negative_ratings: [1, 2]
+  labels: ["negative", "neutral", "positive"]
+
+preprocessing:
+  max_features: 50000
+  min_df: 2
+  max_df: 0.95
+  ngram_range: [1, 2]
+
+models:
+  svm:
+    kernel: "linear"
+    C: 1.0
+    saved_path: "models/svm_pipeline.pkl"
+  naive_bayes:
+    alpha: 1.0
+    saved_path: "models/nb_pipeline.pkl"
+  random_forest:
+    n_estimators: 100
+    random_state: 42
+    saved_path: "models/rf_pipeline.pkl"
+  bert:
+    model_name: "bert-base-uncased"
+    max_length: 128
+    batch_size: 16
+    epochs: 3
+    learning_rate: 2.0e-5
+    saved_path: "models/bert_model/"
+
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  default_model: "svm"
