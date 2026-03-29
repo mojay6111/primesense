@@ -31,8 +31,8 @@ data/processed/
 *.parquet
 
 # ── Models — too large for git ────────────────────────────────
-models/
-*.pkl
+
+
 *.pt
 *.pth
 *.h5

@@ -32,3 +32,4 @@ jupyterlab==4.5.3
 tqdm==4.67.3
 PyYAML==6.0.3
 python-dotenv==1.2.2
+gunicorn==25.2.0

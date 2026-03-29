@@ -1,27 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentiment Analysis</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>primesense 🎬 — Prime Video Sentiment Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg         : #0f1117;
+      --surface    : #1a1d27;
+      --surface2   : #22263a;
+      --border     : #2e3250;
+      --accent     : #00a8e1;
+      --accent-dark: #0087b8;
+      --positive   : #2ecc71;
+      --neutral    : #f39c12;
+      --negative   : #e74c3c;
+      --text       : #e8eaf0;
+      --text-muted : #8b90a8;
+      --radius     : 14px;
+    }
+
+    body {
+      font-family    : 'Inter', sans-serif;
+      background     : var(--bg);
+      color          : var(--text);
+      min-height     : 100vh;
+      display        : flex;
+      flex-direction : column;
+    }
+
+    /* ── Header ── */
+    header {
+      background   : var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding      : 18px 40px;
+      display      : flex;
+      align-items  : center;
+      gap          : 14px;
+    }
+    header .logo {
+      font-size  : 1.5rem;
+      font-weight: 700;
+      color      : var(--accent);
+      letter-spacing: -0.5px;
+    }
+    header .logo span { color: var(--text); }
+    header .tagline {
+      font-size : 0.82rem;
+      color     : var(--text-muted);
+      border-left: 1px solid var(--border);
+      padding-left: 14px;
+      margin-left : 4px;
+    }
+    header .badge {
+      margin-left: auto;
+      background : rgba(0,168,225,0.12);
+      color      : var(--accent);
+      font-size  : 0.75rem;
+      font-weight: 600;
+      padding    : 4px 10px;
+      border-radius: 20px;
+      border     : 1px solid rgba(0,168,225,0.25);
+    }
+
+    /* ── Main layout ── */
+    main {
+      flex      : 1;
+      display   : flex;
+      gap       : 28px;
+      padding   : 36px 40px;
+      max-width : 1100px;
+      margin    : 0 auto;
+      width     : 100%;
+    }
+
+    /* ── Left panel ── */
+    .panel-left { flex: 1.2; display: flex; flex-direction: column; gap: 20px; }
+
+    .card {
+      background   : var(--surface);
+      border       : 1px solid var(--border);
+      border-radius: var(--radius);
+      padding      : 28px;
+    }
+
+    .card h2 {
+      font-size  : 1rem;
+      font-weight: 600;
+      color      : var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 18px;
+    }
+
+    textarea {
+      width         : 100%;
+      min-height    : 160px;
+      background    : var(--surface2);
+      border        : 1px solid var(--border);
+      border-radius : 10px;
+      color         : var(--text);
+      font-family   : 'Inter', sans-serif;
+      font-size     : 0.95rem;
+      line-height   : 1.6;
+      padding       : 16px;
+      resize        : vertical;
+      outline       : none;
+      transition    : border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--text-muted); }
+
+    .char-count {
+      text-align: right;
+      font-size : 0.78rem;
+      color     : var(--text-muted);
+      margin-top: 6px;
+    }
+
+    button[type="submit"] {
+      width        : 100%;
+      padding      : 14px;
+      background   : var(--accent);
+      color        : #fff;
+      font-family  : 'Inter', sans-serif;
+      font-size    : 0.95rem;
+      font-weight  : 600;
+      border       : none;
+      border-radius: 10px;
+      cursor       : pointer;
+      transition   : background 0.2s, transform 0.1s;
+      margin-top   : 14px;
+      letter-spacing: 0.02em;
+    }
+    button[type="submit"]:hover  { background: var(--accent-dark); }
+    button[type="submit"]:active { transform: scale(0.98); }
+
+    /* ── Result card ── */
+    .result-card {
+      background   : var(--surface);
+      border       : 1px solid var(--border);
+      border-radius: var(--radius);
+      padding      : 28px;
+      display      : flex;
+      flex-direction: column;
+      align-items  : center;
+      gap          : 14px;
+      text-align   : center;
+    }
+
+    .sentiment-badge {
+      font-size    : 3rem;
+      font-weight  : 700;
+      text-transform: capitalize;
+      letter-spacing: -1px;
+    }
+    .sentiment-badge.positive { color: var(--positive); }
+    .sentiment-badge.neutral  { color: var(--neutral);  }
+    .sentiment-badge.negative { color: var(--negative); }
+
+    .sentiment-icon { font-size: 2.8rem; }
+
+    .sentiment-bar {
+      width        : 100%;
+      height       : 6px;
+      border-radius: 3px;
+      background   : var(--surface2);
+      overflow     : hidden;
+      margin-top   : 4px;
+    }
+    .sentiment-bar-fill {
+      height        : 100%;
+      border-radius : 3px;
+      transition    : width 0.6s ease;
+    }
+    .positive .sentiment-bar-fill { background: var(--positive); width: 90%; }
+    .neutral  .sentiment-bar-fill { background: var(--neutral);  width: 50%; }
+    .negative .sentiment-bar-fill { background: var(--negative); width: 20%; }
+
+    .result-label {
+      font-size : 0.85rem;
+      color     : var(--text-muted);
+    }
+
+    /* ── Right panel ── */
+    .panel-right { flex: 0.8; display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display              : grid;
+      grid-template-columns: 1fr 1fr;
+      gap                  : 12px;
+    }
+    .stat-item {
+      background   : var(--surface2);
+      border       : 1px solid var(--border);
+      border-radius: 10px;
+      padding      : 16px;
+      text-align   : center;
+    }
+    .stat-value {
+      font-size  : 1.5rem;
+      font-weight: 700;
+      color      : var(--accent);
+    }
+    .stat-label {
+      font-size : 0.75rem;
+      color     : var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── Examples ── */
+    .examples { display: flex; flex-direction: column; gap: 10px; }
+    .example-btn {
+      background   : var(--surface2);
+      border       : 1px solid var(--border);
+      border-radius: 10px;
+      padding      : 12px 16px;
+      color        : var(--text);
+      font-family  : 'Inter', sans-serif;
+      font-size    : 0.83rem;
+      line-height  : 1.5;
+      text-align   : left;
+      cursor       : pointer;
+      transition   : border-color 0.2s, background 0.2s;
+    }
+    .example-btn:hover { border-color: var(--accent); background: rgba(0,168,225,0.05); }
+    .example-btn .tag {
+      display      : inline-block;
+      font-size    : 0.7rem;
+      font-weight  : 600;
+      padding      : 2px 7px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .tag.positive { background: rgba(46,204,113,0.15); color: var(--positive); }
+    .tag.neutral  { background: rgba(243,156,18,0.15);  color: var(--neutral);  }
+    .tag.negative { background: rgba(231,76,60,0.15);   color: var(--negative); }
+
+    /* ── API info ── */
+    .api-box {
+      background   : var(--surface2);
+      border       : 1px solid var(--border);
+      border-radius: 10px;
+      padding      : 16px;
+      font-size    : 0.8rem;
+      color        : var(--text-muted);
+      line-height  : 1.7;
+    }
+    .api-box code {
+      background   : rgba(0,168,225,0.1);
+      color        : var(--accent);
+      padding      : 2px 6px;
+      border-radius: 4px;
+      font-size    : 0.78rem;
+    }
+
+    /* ── Error ── */
+    .error-box {
+      background   : rgba(231,76,60,0.1);
+      border       : 1px solid rgba(231,76,60,0.3);
+      border-radius: 10px;
+      padding      : 14px 18px;
+      color        : var(--negative);
+      font-size    : 0.88rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align   : center;
+      padding      : 20px;
+      color        : var(--text-muted);
+      font-size    : 0.78rem;
+      border-top   : 1px solid var(--border);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      main   { flex-direction: column; padding: 20px; }
+      header { padding: 16px 20px; }
+      header .tagline { display: none; }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Sentiment Analysis</h1>
-        <form method="POST">
-            <textarea name="review_text" placeholder="Enter your review here..." required></textarea><br>
-            <button type="submit">Analyze Sentiment</button>
+  <!-- Header -->
+  <header>
+    <div class="logo">prime<span>sense</span> 🎬</div>
+    <div class="tagline">Amazon Prime Video Sentiment Analyzer</div>
+    <div class="badge">SVM + BERT Powered</div>
+  </header>
+
+  <main>
+
+    <!-- Left Panel -->
+    <div class="panel-left">
+
+      <!-- Input Card -->
+      <div class="card">
+        <h2>📝 Analyze a Review</h2>
+        <form method="POST" id="reviewForm">
+          <textarea
+            name="review_text"
+            id="reviewText"
+            placeholder="Paste or type an Amazon Prime Video review here...&#10;&#10;e.g. 'Absolutely loved this series. The acting was superb and the storyline kept me hooked from start to finish!'"
+            required
+          >{{ review_text or '' }}</textarea>
+          <div class="char-count"><span id="charCount">0</span> characters</div>
+          <button type="submit">Analyze Sentiment →</button>
         </form>
 
-        {% if sentiment %}
-            <div class="result {% if sentiment == 'Positive' %}positive{% elif sentiment == 'Negative' %}negative{% else %}neutral{% endif %}">
-                <p>Predicted Sentiment: <strong>{{ sentiment }}</strong></p>
-            </div>
+        {% if error %}
+        <div class="error-box" style="margin-top:16px;">
+          ⚠️ {{ error }}
+        </div>
         {% endif %}
+      </div>
+
+      <!-- Result Card -->
+      {% if sentiment %}
+      <div class="result-card">
+        <div class="sentiment-icon">
+          {% if sentiment == 'positive' %}🌟
+          {% elif sentiment == 'neutral' %}😐
+          {% else %}😞{% endif %}
+        </div>
+        <div class="sentiment-badge {{ sentiment }}">{{ sentiment }}</div>
+        <div class="sentiment-bar {{ sentiment }}">
+          <div class="sentiment-bar-fill"></div>
+        </div>
+        <div class="result-label">
+          {% if sentiment == 'positive' %}
+            This review reflects a satisfied, happy viewer.
+          {% elif sentiment == 'neutral' %}
+            This review reflects a mixed or indifferent viewer.
+          {% else %}
+            This review reflects an unsatisfied or frustrated viewer.
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
     </div>
+
+    <!-- Right Panel -->
+    <div class="panel-right">
+
+      <!-- Stats -->
+      <div class="card">
+        <h2>📊 Dataset Stats</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">233K</div>
+            <div class="stat-label">Reviews Analyzed</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">88%</div>
+            <div class="stat-label">SVM Accuracy</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Sentiment Classes</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">28</div>
+            <div class="stat-label">Genres Covered</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Example Reviews -->
+      <div class="card">
+        <h2>💡 Try an Example</h2>
+        <div class="examples">
+          <button class="example-btn" onclick="fillExample(this)">
+            <div class="tag positive">positive</div><br>
+            Absolutely loved this series! The storyline was gripping and the cast delivered outstanding performances. Highly recommend to everyone!
+          </button>
+          <button class="example-btn" onclick="fillExample(this)">
+            <div class="tag neutral">neutral</div><br>
+            It was okay. Some episodes were interesting but others felt slow. Not the worst thing I have watched but nothing special either.
+          </button>
+          <button class="example-btn" onclick="fillExample(this)">
+            <div class="tag negative">negative</div><br>
+            Complete waste of time. Terrible storyline, awful acting, and I cannot believe they renewed it for another season. Cancelled my subscription.
+          </button>
+        </div>
+      </div>
+
+      <!-- API Info -->
+      <div class="card">
+        <h2>🔌 REST API</h2>
+        <div class="api-box">
+          Send a <code>POST</code> request to <code>/predict</code><br><br>
+          <strong>Request:</strong><br>
+          <code>{"text": "your review here"}</code><br><br>
+          <strong>Response:</strong><br>
+          <code>{"sentiment": "positive", "model": "svm"}</code><br><br>
+          Health check: <code>GET /health</code>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    Built with ❤️ by the primesense team &nbsp;|&nbsp;
+    Powered by <a href="#">Flask</a>, scikit-learn & HuggingFace Transformers
+  </footer>
+
+  <script>
+    // Character counter
+    const ta = document.getElementById('reviewText');
+    const cc = document.getElementById('charCount');
+    if (ta && cc) {
+      cc.textContent = ta.value.length;
+      ta.addEventListener('input', () => cc.textContent = ta.value.length);
+    }
+
+    // Fill textarea from example buttons
+    function fillExample(btn) {
+      const tag  = btn.querySelector('.tag');
+      const full = btn.innerText.trim();
+      // Strip the tag label from the text
+      const text = full.substring(full.indexOf('\n')).trim();
+      if (ta) {
+        ta.value = text;
+        cc.textContent = text.length;
+        ta.focus();
+      }
+    }
+  </script>
 
 </body>
 </html>
-
