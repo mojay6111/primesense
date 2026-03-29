@@ -9,6 +9,7 @@ import re
 import yaml
 import nltk
 import pandas as pd
+from pathlib import Path
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
@@ -17,8 +18,18 @@ nltk.download("stopwords", quiet=True)
 nltk.download("wordnet", quiet=True)
 nltk.download("omw-1.4", quiet=True)
 
-# Load config
-with open("config.yaml", "r") as f:
+# ── Find config.yaml regardless of where the script is called from ──
+# Walks up from this file's location until it finds config.yaml
+def _find_config() -> Path:
+    current = Path(__file__).resolve().parent
+    for _ in range(5):
+        candidate = current / "config.yaml"
+        if candidate.exists():
+            return candidate
+        current = current.parent
+    raise FileNotFoundError("config.yaml not found in project tree.")
+
+with open(_find_config(), "r") as f:
     CONFIG = yaml.safe_load(f)
 
 STOP_WORDS = set(stopwords.words("english"))
@@ -90,5 +101,5 @@ def preprocess_dataframe(df: pd.DataFrame,
     df = df.copy()
     df["cleaned_text"] = df[text_col].apply(full_preprocess)
     df["sentiment"] = df[rating_col].apply(assign_sentiment)
-    df = df[df["cleaned_text"].str.strip() != ""]   # Drop empty reviews
+    df = df[df["cleaned_text"].str.strip() != ""]
     return df
