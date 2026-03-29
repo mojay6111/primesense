@@ -61,3 +61,6 @@ desktop.ini
 .pytest_cache/
 htmlcov/
 .coverage
+
+# BERT model — too large for GitHub (417MB)
+models/bert_model/
