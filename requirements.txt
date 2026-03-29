@@ -3,30 +3,17 @@ numpy==2.4.3
 pandas==2.3.3
 scikit-learn==1.8.0
 scipy==1.17.1
-imbalanced-learn==0.14.1
 
 # ── NLP ───────────────────────────────────────────────────────
 nltk==3.9.4
 wordcloud==1.9.6
-transformers==5.3.0
-torch==2.10.0+cpu
-torchaudio==2.10.0+cpu
-torchvision==0.25.0+cpu
 
 # ── Model Persistence ─────────────────────────────────────────
 joblib==1.5.3
 
-# ── Visualization ─────────────────────────────────────────────
-matplotlib==3.10.8
-seaborn==0.13.2
-
 # ── Flask API ─────────────────────────────────────────────────
 Flask==3.1.3
 flask-cors==6.0.2
-
-# ── Jupyter ───────────────────────────────────────────────────
-jupyter==1.1.1
-jupyterlab==4.5.3
 
 # ── Utilities ─────────────────────────────────────────────────
 tqdm==4.67.3
